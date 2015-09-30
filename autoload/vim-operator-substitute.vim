@@ -3,7 +3,10 @@
 let g:oper_subst_default_delimiter = "/"
 let g:oper_subst_default_flags = ""
 
-call operator#user#define(':substitute','OperatorSubstitute')
+" script vairables
+let s:oper_subst_last_subst_string = ""
+
+call operator#user#define('substitute','OperatorSubstitute')
 
 function! OperatorSubstitute(motion_wiseness)
   " save cursor and window position
@@ -32,9 +35,16 @@ function! OperatorSubstitute(motion_wiseness)
   endif
 
   " if input_str is not more than a delimiter (or no delimiter, just
-  " space+additional flags), repeat last substitution
+  " space+additional flags), repeat last substitution with additional flags
   if l:actual_delimiter ==# " " || strpart(l:input_str,1,1) ==# ""
-    let l:input_str = " " . strpart(l:input_str,1)
+
+    " if there is no last substitution, return; else use with additional flags
+    if s:oper_subst_last_subst_string ==# ""
+      return
+    else
+      let l:input_str = s:oper_subst_last_subst_string . strpart(l:input_str,1)
+      echo l:input_str
+    endif
 
   else
     " else add missing delimiters and specify to search between marks '[ and ']
@@ -56,6 +66,7 @@ function! OperatorSubstitute(motion_wiseness)
     let l:input_str = substitute(l:input_str,
           \ l:actual_delimiter . '\(.\{-\}\)' . l:actual_delimiter,
           \ l:actual_delimiter . '\\%V\1\\%V'. l:actual_delimiter, "")
+    let s:oper_subst_last_subst_string = l:input_str
   endif
 
   " save '<,'> marks
