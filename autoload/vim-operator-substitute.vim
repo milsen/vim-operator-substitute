@@ -8,9 +8,12 @@ let s:oper_subst_last_subst_string = ""
 
 call operator#user#define('substitute','OperatorSubstitute')
 
+
 function! OperatorSubstitute(motion_wiseness)
-  " save cursor and window position
+  " save cursor and window position, '<,'> marks
   let l:winview = winsaveview()
+  let l:left_v_mark = getpos("'<")
+  let l:right_v_mark = getpos("'>")
 
   " get input_str by user
   call inputsave()
@@ -37,15 +40,7 @@ function! OperatorSubstitute(motion_wiseness)
   " if input_str is not more than a delimiter (or no delimiter, just
   " space+additional flags), repeat last substitution with additional flags
   if l:actual_delimiter ==# " " || strpart(l:input_str,1,1) ==# ""
-
-    " if there is no last substitution, return; else use with additional flags
-    if s:oper_subst_last_subst_string ==# ""
-      return
-    else
-      let l:input_str = s:oper_subst_last_subst_string . strpart(l:input_str,1)
-      echo l:input_str
-    endif
-
+    call RepeatSubstitution(l:input_str,a:motion_wiseness)
   else
     " else add missing delimiters and specify to search between marks '[ and ']
 
@@ -66,23 +61,34 @@ function! OperatorSubstitute(motion_wiseness)
     let l:input_str = substitute(l:input_str,
           \ l:actual_delimiter . '\(.\{-\}\)' . l:actual_delimiter,
           \ l:actual_delimiter . '\\%V\1\\%V'. l:actual_delimiter, "")
+    call PerformSubstitution(l:input_str,a:motion_wiseness)
+
+    " store last substitution
     let s:oper_subst_last_subst_string = l:input_str
   endif
 
-  " save '<,'> marks
-  let l:left_v_mark = getpos("'<")
-  let l:right_v_mark = getpos("'>")
-
-  " enter visual mode and execute command
-  let l:subst_command = ":s" . l:input_str . g:oper_subst_default_flags . "\<CR>"
-  let l:v = operator#user#visual_command_from_wise_name(a:motion_wiseness)
-  execute 'normal!' '`[' . l:v . '`]' . l:subst_command
-
-  " restore '<,'> marks
+  " restore '<,'> mark, scursor and window position
   call setpos("'<",l:left_v_mark)
   call setpos("'>",l:right_v_mark)
-
-  " restore cursor and window position
   call winrestview(l:winview)
   echo ""
+endfunction
+
+
+function! PerformSubstitution(input_str,motion_wiseness)
+  " enter visual mode and execute command
+  let l:subst_command = ":s" . a:input_str . g:oper_subst_default_flags . "\<CR>"
+  let l:v = operator#user#visual_command_from_wise_name(a:motion_wiseness)
+  execute 'normal!' '`[' . l:v . '`]' . l:subst_command
+endfunction
+
+
+function! RepeatSubstitution(input_str,motion_wiseness)
+  " if there is no last substitution, return; else use with additional flags
+  if s:oper_subst_last_subst_string ==# ""
+    return
+  else
+    let l:input_str = s:oper_subst_last_subst_string . strpart(a:input_str,1)
+  endif
+  call PerformSubstitution(l:input_str,a:motion_wiseness)
 endfunction
