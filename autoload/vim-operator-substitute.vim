@@ -24,16 +24,16 @@ function! OperatorSubstitute(motion_wiseness)
   " get actual delimiter (first char in input)
   let l:actual_delimiter = strpart(l:input_str, 0, 1)
 
-  " error if delimiter is alpha-numeric, |, \, " or space
+  " error if delimiter is alpha-numeric, |, \ or "
   if 0 <= match(l:actual_delimiter, "[a-zA-Z0-9]") ||
-        \  0 <= index(["|","\\","\""," "], l:actual_delimiter)
-    echoerr "Delimiter cannot be alpha-numeric, \<Bar>, \", \\ or a space."
+        \  0 <= index(["|","\\","\""], l:actual_delimiter)
+    echoerr "Delimiter cannot be alpha-numeric, \<Bar>, \" or \\."
     return
   endif
 
-  " if input_str is not more than a delimiter (or delimiter+space+additional
-  " flags), repeat last substitution
-  if strpart(l:input_str,1,1) ==# " " || strpart(l:input_str,1,1) ==# ""
+  " if input_str is not more than a delimiter (or no delimiter, just
+  " space+additional flags), repeat last substitution
+  if l:actual_delimiter ==# " " || strpart(l:input_str,1,1) ==# ""
     let l:input_str = " " . strpart(l:input_str,1)
 
   else
