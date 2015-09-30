@@ -6,14 +6,13 @@ let g:oper_subst_default_flags = ""
 " script vairables
 let s:oper_subst_last_subst_string = ""
 
+" operator definitions
 call operator#user#define('substitute','OperatorSubstitute')
+call operator#user#define('repeat-substitute','OperatorRepeatSubstitution')
 
 
 function! OperatorSubstitute(motion_wiseness)
-  " save cursor and window position, '<,'> marks
-  let l:winview = winsaveview()
-  let l:left_v_mark = getpos("'<")
-  let l:right_v_mark = getpos("'>")
+  let l:winview_marks = SaveWinViewAndMarks()
 
   " get input_str by user
   call inputsave()
@@ -40,7 +39,7 @@ function! OperatorSubstitute(motion_wiseness)
   " if input_str is not more than a delimiter (or no delimiter, just
   " space+additional flags), repeat last substitution with additional flags
   if l:actual_delimiter ==# " " || strpart(l:input_str,1,1) ==# ""
-    call RepeatSubstitution(l:input_str,a:motion_wiseness)
+    call RepeatSubstitution(a:motion_wiseness,l:input_str)
   else
     " else add missing delimiters and specify to search between marks '[ and ']
 
@@ -61,21 +60,18 @@ function! OperatorSubstitute(motion_wiseness)
     let l:input_str = substitute(l:input_str,
           \ l:actual_delimiter . '\(.\{-\}\)' . l:actual_delimiter,
           \ l:actual_delimiter . '\\%V\1\\%V'. l:actual_delimiter, "")
-    call PerformSubstitution(l:input_str,a:motion_wiseness)
+    call PerformSubstitution(a:motion_wiseness,l:input_str)
 
     " store last substitution
     let s:oper_subst_last_subst_string = l:input_str
   endif
 
-  " restore '<,'> mark, scursor and window position
-  call setpos("'<",l:left_v_mark)
-  call setpos("'>",l:right_v_mark)
-  call winrestview(l:winview)
+  call RestoreWinViewAndMarks(l:winview_marks)
   echo ""
 endfunction
 
 
-function! PerformSubstitution(input_str,motion_wiseness)
+function! PerformSubstitution(motion_wiseness,input_str)
   " enter visual mode and execute command
   let l:subst_command = ":s" . a:input_str . g:oper_subst_default_flags . "\<CR>"
   let l:v = operator#user#visual_command_from_wise_name(a:motion_wiseness)
@@ -83,12 +79,34 @@ function! PerformSubstitution(input_str,motion_wiseness)
 endfunction
 
 
-function! RepeatSubstitution(input_str,motion_wiseness)
+function! OperatorRepeatSubstitution(motion_wiseness)
+  let l:winview_marks = SaveWinViewAndMarks()
+  call RepeatSubstitution(a:motion_wiseness,"")
+  call RestoreWinViewAndMarks(l:winview_marks)
+endfunction
+
+
+function! RepeatSubstitution(motion_wiseness,input_str)
   " if there is no last substitution, return; else use with additional flags
   if s:oper_subst_last_subst_string ==# ""
     return
   else
     let l:input_str = s:oper_subst_last_subst_string . strpart(a:input_str,1)
   endif
-  call PerformSubstitution(l:input_str,a:motion_wiseness)
+  call PerformSubstitution(a:motion_wiseness,l:input_str)
 endfunction
+
+
+function! SaveWinViewAndMarks()
+  " return cursor and window position, '<,'> marks
+  return [winsaveview(),getpos("'<"),getpos("'>")]
+endfunction
+
+
+function! RestoreWinViewAndMarks(winview_marks)
+  " restore '<,'> mark, scursor and window position
+  call winrestview(a:winview_marks[0])
+  call setpos("'<",a:winview_marks[1])
+  call setpos("'>",a:winview_marks[2])
+endfunction
+
