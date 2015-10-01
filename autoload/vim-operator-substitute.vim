@@ -3,7 +3,7 @@
 let g:oper_subst_default_delimiter = "/"
 let g:oper_subst_default_flags = ""
 
-" script vairables
+" script variables
 let s:oper_subst_last_subst_string = ""
 
 " operator definitions
@@ -54,16 +54,25 @@ function! OperatorSubstitute(motion_wiseness)
       let l:input_str .= l:actual_delimiter
     endif
 
-    " to search between specific columns and not linewise like :s, we add \%V to
-    " the search pattern and later enter visual mode, see :help \%V
-    " \%<'[ does not work since it also operates linewise and ignores columns
-    let l:input_str = substitute(l:input_str,
-          \ l:actual_delimiter . '\(.\{-\}\)' . l:actual_delimiter,
-          \ l:actual_delimiter . '\\%V\1\\%V'. l:actual_delimiter, "")
+    " if input_str is not of the form "//.*" or "//repl.*" or "//repl/g.*",
+    " we have do not have to retrieve the last search pattern, but to add \%V
+    if match(l:input_str,l:actual_delimiter . l:actual_delimiter . ".*") ==# -1
+      " to search between specific columns and not linewise like :s, we add \%V to
+      " the search pattern and later enter visual mode, see :help \%V
+      " \%<'[ does not work since it also operates linewise and ignores columns
+      let l:input_str = substitute(l:input_str,
+            \ l:actual_delimiter . '\(.\{-\}\)' . l:actual_delimiter,
+            \ l:actual_delimiter . '\\%V\1\\%V'. l:actual_delimiter, "")
+    else
+      " insert last search pattern into input_str between first delimiters
+      let l:input_str = l:actual_delimiter . @/ . strpart(l:input_str,1)
+    endif
+
     call PerformSubstitution(a:motion_wiseness,l:input_str)
 
-    " store last substitution
+    " store last substitution as well as last search pattern in /-register
     let s:oper_subst_last_subst_string = l:input_str
+    let @/ = split(s:oper_subst_last_subst_string,l:actual_delimiter)[0]
   endif
 
   call RestoreWinViewAndMarks(l:winview_marks)
@@ -87,12 +96,12 @@ endfunction
 
 
 function! RepeatSubstitution(motion_wiseness,input_str)
-  " if there is no last substitution, return; else use with additional flags
+  " if there is no last substitution, return; else use it with additional flags
   if s:oper_subst_last_subst_string ==# ""
     return
-  else
-    let l:input_str = s:oper_subst_last_subst_string . strpart(a:input_str,1)
   endif
+
+  let l:input_str = s:oper_subst_last_subst_string . strpart(a:input_str,1)
   call PerformSubstitution(a:motion_wiseness,l:input_str)
 endfunction
 
