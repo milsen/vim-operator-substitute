@@ -1,17 +1,23 @@
 
-" default variables
-let g:oper_subst_default_delimiter = "/"
-let g:oper_subst_default_flags = ""
+" set default variables if not set already
+function! s:GetGVar(name, default)
+    return get(g:, 'operator#substitute#' . a:name, a:default)
+endfunction
+
+let g:operator#substitute#default_delimiter = s:GetGVar("default_delimiter","/")
+let g:operator#substitute#default_flags = s:GetGVar("default_flags","")
+
 
 " script variables
 let s:oper_subst_last_subst_string = ""
+
 
 function! operator#substitute#Substitute(motion_wiseness)
   let l:winview_marks = s:SaveWinViewAndMarks()
 
   " get input_str by user
   call inputsave()
-  let l:input_str = input("s", g:oper_subst_default_delimiter)
+  let l:input_str = input("s", g:operator#substitute#default_delimiter)
   call inputrestore()
   echo ""
 
@@ -84,7 +90,8 @@ endfunction
 
 function! s:PerformSubstitution(motion_wiseness,input_str)
   " enter visual mode and execute command
-  let l:subst_command = ":s" . a:input_str . g:oper_subst_default_flags . "\<CR>"
+  let l:subst_command =
+    \ ":s" . a:input_str . g:operator#substitute#default_flags . "\<CR>"
   let l:v = operator#user#visual_command_from_wise_name(a:motion_wiseness)
   execute 'normal!' '`[' . l:v . '`]' . l:subst_command
 endfunction
