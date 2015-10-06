@@ -4,9 +4,9 @@ endif
 
 " operator definitions
 call operator#user#define('substitute','operator#substitute#Substitute')
-call operator#user#define('repeat-substitute',
+call operator#user#define('substitute-repeat',
   \ 'operator#substitute#RepeatSubstitution')
-call operator#user#define('repeat-substitute-without-flags',
+call operator#user#define('substitute-repeat-no-flags',
   \ 'operator#substitute#RepeatSubstitutionWithoutFlags')
 
 let g:loaded_operator_substitute = 1
