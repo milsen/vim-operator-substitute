@@ -57,15 +57,18 @@ endfunction
 
 " Main Function {{{
 function! s:PrepareAndSubstitute(motion_wiseness,input_str,actual_delimiter)
+  " prepare substitution string
   let l:input_str = s:AddMissingDelimiters(a:input_str,a:actual_delimiter)
   let l:input_str = s:AddOldSearchPattern(l:input_str,a:actual_delimiter)
   let l:input_str = s:WrapInV(l:input_str,a:actual_delimiter)
 
   let l:winview_marks = s:SaveWinViewAndMarks()
 
+  " perform substitution, l-movement to the right is needed for commands like
+  " siw or sa) to take into account the rightmost character
   let l:subst_command = ":s" . l:input_str . g:operator#substitute#default_flags
   let l:v = operator#user#visual_command_from_wise_name(a:motion_wiseness)
-  execute 'normal!' '`[' . l:v . '`]' . l:subst_command . "\<CR>"
+  execute 'normal!' '`[' . l:v . '`]' . 'l' . l:subst_command . "\<CR>"
 
   call s:RestoreWinViewAndMarks(l:winview_marks)
   echo ""
