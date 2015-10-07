@@ -64,11 +64,16 @@ function! s:PrepareAndSubstitute(motion_wiseness,input_str,actual_delimiter)
 
   let l:winview_marks = s:SaveWinViewAndMarks()
 
-  " perform substitution, l-movement to the right is needed for commands like
-  " siw or sa) to take into account the rightmost character
-  let l:subst_command = ":s" . l:input_str . g:operator#substitute#default_flags
+  " move mark of selection end to the right for commands like siw or sa) to take into
+  " account the rightmost character
+  let l:endpos = getpos("']")
+  let l:endpos[2] += 1
+  call setpos("']",l:endpos)
+
+  " perform substitution
   let l:v = operator#user#visual_command_from_wise_name(a:motion_wiseness)
-  execute 'normal!' '`[' . l:v . '`]' . 'l' . l:subst_command . "\<CR>"
+  let l:subst_command = ":s" . l:input_str . g:operator#substitute#default_flags
+  execute 'keepjumps normal!' '`[' . l:v . '`]' . l:subst_command . "\<CR>"
 
   call s:RestoreWinViewAndMarks(l:winview_marks)
   echo ""
