@@ -64,8 +64,8 @@ function! s:PrepareAndSubstitute(motion_wiseness,input_str,actual_delimiter)
 
   let l:winview_marks = s:SaveWinViewAndMarks()
 
-  " move mark of selection end to the right for commands like siw or sa) to take into
-  " account the rightmost character
+  " move mark of selection end to the right for commands like siw or sa) to take
+  " into account the rightmost character
   let l:endpos = getpos("']")
   let l:endpos[2] += 1
   call setpos("']",l:endpos)
@@ -76,7 +76,6 @@ function! s:PrepareAndSubstitute(motion_wiseness,input_str,actual_delimiter)
   execute 'keepjumps normal!' '`[' . l:v . '`]' . l:subst_command . "\<CR>"
 
   call s:RestoreWinViewAndMarks(l:winview_marks)
-  echo ""
 endfunction
 " }}}
 
@@ -116,7 +115,8 @@ endfunction
 function! s:AddOldSearchPattern(input_str,actual_delimiter)
   " if input_str is of the form "//repl/flags", we have to retrieve the last
   " search pattern such that we can later wrap it in \%V
-  if match(a:input_str,a:actual_delimiter . a:actual_delimiter . ".*") > -1
+  if match(a:input_str,a:actual_delimiter . a:actual_delimiter .  ".*" .
+      \ a:actual_delimiter) > -1
     return a:actual_delimiter . @/ . strpart(a:input_str,1)
   endif
   return a:input_str
