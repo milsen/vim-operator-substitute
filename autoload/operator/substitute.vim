@@ -11,10 +11,7 @@ let g:operator#substitute#default_flags = s:GetGVar("default_flags","")
 " Operator Functions {{{
 function! operator#substitute#Substitute(motion_wiseness)
   " get input_str by user
-  call inputsave()
   let l:input_str = input("s", g:operator#substitute#default_delimiter)
-  call inputrestore()
-  echo ""
 
   " input_str is empty if ESC was pressed (or delimiter was deleted),
   " return silently
