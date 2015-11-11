@@ -36,8 +36,13 @@ function! operator#substitute#Substitute(motion_wiseness)
     call s:PrepareAndSubstitute(a:motion_wiseness,
         \ "//~/" . strpart(l:input_str,1), "/")
   else
+    " if the search pattern is empty, the old search is repeated:
+    " so perform the substitution and only change the search register if the
+    " pattern is not empty
+    let l:new_pattern = split(l:input_str,l:actual_delimiter,1)[1]
+    let l:searchreg_tmp = getreg("/")
     call s:PrepareAndSubstitute(a:motion_wiseness,l:input_str,l:actual_delimiter)
-    let @/ = split(l:input_str,l:actual_delimiter)[0]
+    let @/ = l:new_pattern !=# "" ? l:new_pattern : l:searchreg_tmp
   endif
 endfunction
 
