@@ -74,8 +74,8 @@ function! s:PrepareAndSubstitute(motion_wiseness,input_str,actual_delimiter)
 
   " perform substitution
   let l:v = operator#user#visual_command_from_wise_name(a:motion_wiseness)
-  let l:subst_command = ":s" . l:input_str . g:operator#substitute#default_flags
-  execute 'keepjumps normal!' '`[' . l:v . '`]' . l:subst_command . "\<CR>"
+  execute 'normal!' '`[' . l:v . '`]' . l:v
+  execute "'<,'>s" . l:input_str . g:operator#substitute#default_flags
 
   call s:RestoreWinViewAndMarks(l:winview_marks)
 endfunction
