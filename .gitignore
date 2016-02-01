@@ -1,0 +1,4 @@
+# files generated while using test-environment
+Gemfile.lock
+VimFlavor.lock
+.vim-flavor
