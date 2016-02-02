@@ -1,0 +1,252 @@
+*operator-substitute.txt* Use :substitute like an operator
+
+                        vim-operator-substitute
+
+==============================================================================
+Contents                                        *operator-substitute-contents*
+
+   1. Introduction .................... |operator-substitute|
+       1.1 Dependencies ............... |operator-substitute-dependencies|
+       1.2 Getting Started ............ |operator-substitute-getting-started|
+   2. Usage ........................... |operator-substitute-usage|
+       2.1 Patterns ................... |operator-substitute-pattern|
+   3. Mappings ........................ |operator-substitute-mappings|
+   4. Variables ....................... |operator-substitute-variables|
+   5. Bugs ............................ |operator-substitute-bugs|
+   6. About ........................... |operator-substitute-about|
+
+==============================================================================
+1. Introduction                  *vim-operator-substitute* *operator-substitute*
+
+This plugin provides the possibility to use the |:s| command like an
+|operator| and apply substitutions to |text-objects| or in the range of
+|motion|s. Operator-alternatives for |&| and |g&|, which repeat substitutions,
+are also provided.
+
+vim-operator-substitute has several advantages over `:s`:
+
+- Applying a substitution to a text-object or in range of a motion is a common
+  task that is mildly annoying in default-vim as one has to make use of
+  |visual-mode|. With this plugin many keystrokes are spared: Substituting all
+  a's by b's in a paragraph can be done with "sipa/b" instead of "vip:s/a/b".
+
+- `:s` works linewise and is not bounded by columns. This plugin, however,
+  will apply the given substitution only inside the specified region. This is
+  possible with `:s` as well but requires a tedious workaround using
+  |visual-mode| and |\%V|.
+
+- Some unwanted behavior of `:s` like ignoring the last character in a visual
+  selection is worked around.
+
+- `:s` moves the cursor position to the beginning of the line whenever you use
+  it. This plugin on the other hand moves the cursor position to the beginning
+  of the specified text-object or motion like all operators do.
+
+- This plugin uses the input-|history| instead of cluttering your
+  commandline-history with substitution commands.
+
+------------------------------------------------------------------------------
+1.1 Dependencies                            *operator-substitute-dependencies*
+
+This plugin is dependent on the |vim-operator-user| plugin by kana:
+            https://github.com/kana/vim-operator-user
+vim-operator-user must be installed to use |vim-operator-substitute|.
+
+------------------------------------------------------------------------------
+1.2 Getting Started                      *operator-substitute-getting-started*
+
+vim-operator-substitute does not provide any default mappings as everybody has
+their own vim configuration and prefers different mappings.
+
+However, since there already is a substitute key that many deem to be useless
+(|s| is a synonym for |cl| and |S| a synonym for |cc|), it makes sense to
+remap it if you do not use it frequently and have not remapped it already.
+For uniformity and because of ease you may want to use `&` and `g&` like
+operators as well.
+
+Hence, the recommended default configuration is:
+
+>
+        map s <Plug>(operator-substitute)
+        map S <Plug>(operator-substitute)$
+        map & <Plug>(operator-substitute-repeat)
+        map g& <Plug>(operator-substitute-repeat-no-flags)
+<
+
+This causes...
+- |s| to be the operator for substitution.
+- |S| to be the operator for substitution up to the end of the line
+  (analogously to |D| or |C| which also operate on the section between the
+  cursor position and the end of the line).
+- |&| to be the operator for repeating the last substitution making use of the
+  last used {flags}. This is unlike `&`'s standard behavior as it normally
+  ignores the last used {flags}. However, you will probably use this kind of
+  repetition more often and therefore might want to map a shorter key sequence
+  to it.
+- |g&| to be the operator for repeating the last substitution without the last
+  used {flags}. Repeating a substitution globally, which is `g&`'s default
+  behavior, is easily done with "gg&G" (or "&ie" if you use kana's
+  |textobj-entire|).  Hence, it makes sense to give `g&` a new functionality.
+
+==============================================================================
+2. Usage                                           *operator-substitute-usage*
+
+In the following it is assumed that you use the default configuration
+recommended above. However, everything that is explained will work analogously
+with any other group of keys mapped to the provided operators.
+
+After specifying the text object or range of motion and pressing s, you are
+prompted to insert a search string: "s/" will appear in the commandline.
+Simply input "pattern/repl/flags" and press <CR> to apply the substitution.
+You can also shorten this if you do not want to specify the {flags} or the
+{repl}, see |operator-substitute-pattern|.
+Moreover, it is possible to change the first and therefore all delimiters on
+the go, regardless of the setting of
+|g:operator#substitute#default_delimiter|.
+
+You can change the default behavior of operator-substitute using the
+|operator-substitute-variables|.
+
+------------------------------------------------------------------------------
+2.1 Patterns                                     *operator-substitute-pattern*
+
+In general all of the patterns you would use with `:s` also work with this
+plugin. Repeating a substitution with s itself is done, however, using "s/" or
+"s " - just "s" will not do anything.
+
+Note that using ordinary |pattern-atoms| starting with |\%| is unnecessary as
+these normally specify the text region in which the substitution is applied.
+Here, that job is done by motions and text-objects. For the same reason,
+specifying a [count] after the {flags} is unsupported. Simply use [count]ss
+instead.
+
+The following are examples for possible input strings. "last search pattern"
+refers to the content of the register |quote/| (operator-substitute behaves
+as if the r-flag were always used).
+
+ s                   do not do anything
+ s (space after "s") repeat last substitution using last search pattern
+ s/                  repeat last substitution using last search pattern
+ s g                 repeat last substitution with g-flag
+ s/pattern           substitute "pattern" by the empty string
+ s/pattern/          substitute "pattern" by the empty string
+ s/pattern//         substitute "pattern" by the empty string
+ s/pattern/repl      substitute "pattern" by "repl"
+ s/pattern/repl/     substitute "pattern" by "repl"
+ s/pattern/repl/g    substitute "pattern" by "repl" globally
+
+ s//                 substitute the last search pattern by the empty string
+ s///                substitute the last search pattern by the empty string
+ s///g               substitute the last search pattern by the empty string
+                     globally
+ s/pattern//g        substitute "pattern" by the empty string globally
+ s//repl             substitute the last search pattern by "repl"
+ s//repl/            substitute the last search pattern by "repl"
+ s//repl/g           substitute the last search pattern by "repl" globally
+
+ s//~                repeat last substitution using last replacement string
+ s//~/               repeat last substitution using last replacement string
+ s//~/g              repeat last substitution using last replacement string
+                     globally
+ s/pattern/~         substitute "pattern" by the last replacement string
+ s/pattern/~/        substitute "pattern" by the last replacement string
+ s/pattern/~/g       substitute "pattern" by the last replacement string
+                     globally
+
+ Note:
+ s/ g                subtitute " g" by the empty string!
+
+==============================================================================
+3. Mappings                                     *operator-substitute-mappings*
+
+<Plug>(operator-substitute)                      *<Plug>(operator-substitute)*
+
+ Operator mapping to apply a substitution on the given text-object or range
+ of motion.
+
+<Plug>(operator-substitute-repeat)        *<Plug>(operator-substitute-repeat)*
+
+ Operator mapping to repeat the last substitution using the {flags} of the
+ last substitution as well. The search pattern is the content of the last
+ search pattern-register |quote/|, which means that a search using |/| will
+ change the search pattern, too. The replacement string is the replacement
+ string of the previously performed substitution.
+ This operator is the equivalent to applying ":s//~/&r" on the text-object. It
+ is also equivalent to "s/" or "s " with |<Plug>(operator-substitute)|.
+
+                                 *<Plug>(operator-substitute-repeat-no-flags)*
+<Plug>(operator-substitute-repeat-no-flags)
+
+ Operator mapping to repeat the last substitution disregarding the {flags} of
+ the last substitution and therefore only using the {flags} given by
+ |g:oper_subst_default_flags|. The search pattern is the content of the last
+ search pattern-register |quote/|, which means that a search using |/| will
+ change the search pattern as well.
+ The replacement string is the replacement string of the previously performed
+ substitution. This operator is the equivalent to applying ":s//~/r" on the
+ text-object.
+
+==============================================================================
+4. Variables                                   *operator-substitute-variables*
+
+                                       *g:operator#substitute#completion_type*
+g:operator#substitute#completion_type                   string (default: "")
+
+ A string that determines the kind of completion to be used in the input
+ dialog. It can be either the empty string or one that is described in
+ |:command-completion|. If it is the empty string, no completion is used.
+
+                                     *g:operator#substitute#default_delimiter*
+g:operator#substitute#default_delimiter             character (default: "/")
+
+ A character that will be the default input for the substitution prompt and
+ serves as the delimiter to separate {pattern}, replacement {string} and
+ {flags}. The delimiter can be deleted and changed on the go, it is simply
+ given to reduce typing. If you want to be as flexible as possible, you can
+ choose to not use any default delimiter at all by setting
+ `g:operator#substitute#default_delimiter` to the empty string.
+
+ Note that all non-alphanumeric characters can be used as a default delimiter
+ except for |, \ or " - see |E146|. Be careful with " " as your default
+ delimiter. If you do not change the space on the go, your previous
+ substitution will be repeated using any string after it as an additional
+ flag, see |operator-substitute-pattern|.
+
+                                         *g:operator#substitute#default_flags*
+g:operator#substitute#default_flags                      string (default: "")
+
+ {flags} that will always be used when substituting or repeating a
+ substitution, even for <Plug>(operator-substitute-repeat-no-flags) (which
+ only ignores the explicitly set {flags} of the last substitution).
+
+ Note that this variable does not override |gdefault| and both `gdefault` and
+ `g:operator#substitute#default_flags` are taken into account when using any
+ of the mappings provided by this plugin. Therefore, if both `gdefault` is set
+ and "g" is included in `g:operator#substitute#default_flags`, all
+ substitutions will be applied non-globally by default.
+
+==============================================================================
+5. Bugs                                             *operator-substitute-bugs*
+
+- As this plugin is based on vim-operator-user, it is of course susceptible to
+  all of its bugs, see |operator-user-bugs|.
+- The |changelist|-position of a substitution is set to column 0, even if
+  |keepjumps| is used. After undoing a substitution, the cursor snaps to
+  beginning of line, and the |'<|,|'>|-marks are set to the region on which
+  the substitution was applied.
+- Substitutions without the g-flag on multiple lines do not only substitute
+  once overall but once every line. This is also the behavior of vim on
+  visually selected areas and is hence not an actual bug.
+
+==============================================================================
+6. About                                           *operator-substitute-about*
+
+Author:  Max B. Ilsen
+License: MIT
+
+If you want to download the source code or contribute by reporting or fixing a
+bug, do it here:
+            https://github.com/milsen/vim-operator-substitute/
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:
