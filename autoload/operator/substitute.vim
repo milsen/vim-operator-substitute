@@ -4,6 +4,7 @@ function! s:GetGVar(name, default)
     return get(g:, 'operator#substitute#' . a:name, a:default)
 endfunction
 
+let g:operator#substitute#completion_type = s:GetGVar("completion_type","")
 let g:operator#substitute#default_delimiter = s:GetGVar("default_delimiter","/")
 let g:operator#substitute#default_flags = s:GetGVar("default_flags","")
 " }}}
@@ -11,7 +12,13 @@ let g:operator#substitute#default_flags = s:GetGVar("default_flags","")
 " Operator Functions {{{
 function! operator#substitute#Substitute(motion_wiseness)
   " get input_str by user
-  let l:input_str = input("s", g:operator#substitute#default_delimiter)
+  if g:operator#substitute#completion_type ==# ""
+    let l:input_str = input("s", g:operator#substitute#default_delimiter)
+  else
+    let l:input_str = input("s",
+      \ g:operator#substitute#default_delimiter,
+      \ g:operator#substitute#completion_type)
+  endif
 
   " input_str is empty if ESC was pressed (or delimiter was deleted),
   " return silently
