@@ -1,3 +1,6 @@
+# help-tags generated in doc/
+tags
+
 # files generated while using test-environment
 Gemfile.lock
 VimFlavor.lock
