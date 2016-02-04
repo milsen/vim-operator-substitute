@@ -114,6 +114,9 @@ describe 'operator-substitute, functionality:'
 
   " <,> mark positions
   it 'no change in <,> marks'
+    if v:version < 704
+      SKIP "<,> will change without some patch in Vim 7.3"
+    endif
     normal vlvgg
     execute "normal s$a/1\<CR>"
     Expect getpos("'<")[1:2] == [1,1]
